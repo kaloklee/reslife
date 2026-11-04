@@ -134,14 +134,13 @@ residlife = function(values, distribution, parameters, p = .5, type = 'mean'){
     if (names(parameters)[1]!= 'rate'){
       stop("incorrect parameter entered. The parameter for exponential is rate")
     }
-    else{
-      lambda = parameters[1]
-      mx = 1/lambda
-      mx = rep(mx, (max-min))
-      sx = exp(-(1/lambda)*x)
+  else{
+      lambda = as.numeric(parameters[1])
+      mx = rep(1 / lambda, length(x))
+      sx = exp(-lambda * x)
       px = function(p){
-        pc = (1-p)*sx
-        px = qexp(pc, 1/lambda, lower.tail = FALSE)
+        pc = (1 - p) * sx
+        px = as.numeric(qexp(pc, rate = lambda, lower.tail = FALSE) - x)
       }
     }
   }

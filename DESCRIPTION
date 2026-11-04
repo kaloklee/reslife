@@ -23,7 +23,6 @@ Description: A pair of functions for calculating mean residual life (MRL)
     This function is based on Jackson (2016) <doi:10.18637/jss.v070.i08>.  
 License: GPL (>= 3)
 Encoding: UTF-8
-RoxygenNote: 7.2.3
 Depends: 
     pracma,
     flexsurv,
@@ -31,5 +30,8 @@ Depends:
 URL: https://github.com/an-crawford/reslife
 Suggests: 
     knitr,
-    rmarkdown
+    rmarkdown,
+    testthat (>= 3.0.0)
 VignetteBuilder: knitr
+Config/roxygen2/version: 8.1.1
+Config/testthat/edition: 3
