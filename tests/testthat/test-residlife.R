@@ -78,3 +78,51 @@ test_that("weibull MRL at t0 = 0 matches theoretical expectation", {
   )
   expect_equal(res, expected_mean, tolerance = 1e-4)
 })
+test_that("gamma reduces to exponential when shape = 1", {
+  rate_val <- 0.25
+  scale_val <- 1 / rate_val
+  
+  # For shape = 1, MRL must equal scale (1/rate) across all t0 (memoryless)
+  for (t0 in c(0, 2, 8)) {
+    res_mrl_scale <- residlife(
+      values = t0,
+      distribution = "gamma",
+      parameters = c(shape = 1, scale = scale_val),
+      type = "mean"
+    )
+    res_mrl_rate <- residlife(
+      values = t0,
+      distribution = "gamma",
+      parameters = c(shape = 1, rate = rate_val),
+      type = "mean"
+    )
+    expect_equal(res_mrl_scale, scale_val, tolerance = 1e-4)
+    expect_equal(res_mrl_rate, scale_val, tolerance = 1e-4)
+  }
+})
+
+test_that("gamma accepts flexible parameter ordering and unnamed vectors", {
+  shape_val <- 2.0
+  scale_val <- 3.0
+  rate_val  <- 1 / scale_val
+  
+  res_named_scale <- residlife(values = 2, distribution = "gamma", parameters = c(shape = shape_val, scale = scale_val))
+  res_named_rate  <- residlife(values = 2, distribution = "gamma", parameters = c(rate = rate_val, shape = shape_val))
+  res_unnamed     <- residlife(values = 2, distribution = "gamma", parameters = c(shape_val, scale_val))
+  
+  expect_equal(res_named_rate, res_named_scale, tolerance = 1e-4)
+  expect_equal(res_unnamed, res_named_scale, tolerance = 1e-4)
+})
+
+test_that("gamma MRL at t0 = 0 matches unconditional expectation a * lambda", {
+  # Case 1: shape > 1
+  shape_gt1 <- 2.5
+  scale_val <- 4.0
+  res_gt1 <- residlife(values = 0, distribution = "gamma", parameters = c(shape = shape_gt1, scale = scale_val), type = "mean")
+  expect_equal(res_gt1, shape_gt1 * scale_val, tolerance = 1e-4)
+  
+  # Case 2: shape < 1
+  shape_lt1 <- 0.5
+  res_lt1 <- residlife(values = 0, distribution = "gamma", parameters = c(shape = shape_lt1, scale = scale_val), type = "mean")
+  expect_equal(res_lt1, shape_lt1 * scale_val, tolerance = 1e-4)
+})

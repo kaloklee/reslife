@@ -71,23 +71,29 @@ residlife = function(values, distribution, parameters, p = .5, type = 'mean'){
   }
   if (distribution == 'gamma'){
     x = values
-    if (names(parameters)[1]!= "shape" | !(names(parameters)[2] %in% c("scale", "rate"))){
-      stop("incorrect parameters entered. Parameters for gamma are shape and scale/rate")
+    if (is.null(names(parameters))) {
+      if (length(parameters) < 2) {
+        stop("Two parameters required for gamma: shape and scale (or rate)")
+      }
+      a = as.numeric(parameters[1])
+      lambda = as.numeric(parameters[2])  # default unnamed 2nd argument to scale
+    } else {
+      if (!("shape" %in% names(parameters)) || !any(c("scale", "rate") %in% names(parameters))) {
+        stop("incorrect parameters entered. Parameters for gamma are shape and scale/rate")
+      }
+      a = as.numeric(parameters["shape"])
+      if ("rate" %in% names(parameters)) {
+        lambda = 1 / as.numeric(parameters["rate"])
+      } else {
+        lambda = as.numeric(parameters["scale"])
+      }
     }
-    else{
-      if (names(parameters)[2] == 'rate'){
-        lambda = 1/parameters[2]
-      }
-      else{
-        lambda = parameters[2]
-      }
-      a = parameters[1]
-      sx = pgamma(x, shape = a, scale = lambda, lower.tail = FALSE)
-      mx = as.numeric(((x^a)*exp(-x/lambda))/((lambda^(a-1))*gamma(a)*sx)+(lambda*a) - x)
-      px = function(p){
-        pc = (1-p)*sx
-        px = as.numeric(qgamma(pc, shape = a, scale = lambda, lower.tail = FALSE) - x)
-      }
+    
+    sx = pgamma(x, shape = a, scale = lambda, lower.tail = FALSE)
+    mx = as.numeric(((x^a)*exp(-x/lambda))/((lambda^(a-1))*gamma(a)*sx)+(lambda*a) - x)
+    px = function(p){
+      pc = (1-p)*sx
+      px = as.numeric(qgamma(pc, shape = a, scale = lambda, lower.tail = FALSE) - x)
     }
   }
   if (distribution == 'gengamma.orig'){
