@@ -308,3 +308,408 @@ test_that("gengamma reduces to weibull when Q = 1", {
   
   expect_equal(res_gengamma, res_weibull, tolerance = 1e-4)
 })
+
+test_that("lognormal accepts flexible parameter ordering and unnamed vectors", {
+  mu_val    <- 1.5
+  sigma_val <- 0.4
+  
+  res_std <- residlife(
+    values = 3.0,
+    distribution = "lognormal",
+    parameters = c(meanlog = mu_val, sdlog = sigma_val)
+  )
+  res_reordered <- residlife(
+    values = 3.0,
+    distribution = "lognormal",
+    parameters = c(sdlog = sigma_val, meanlog = mu_val)
+  )
+  res_unnamed <- residlife(
+    values = 3.0,
+    distribution = "lognormal",
+    parameters = c(mu_val, sigma_val)
+  )
+  
+  expect_equal(res_reordered, res_std, tolerance = 1e-4)
+  expect_equal(res_unnamed, res_std, tolerance = 1e-4)
+})
+
+test_that("lognormal MRL at t0 = 0 equals the theoretical unconditional mean", {
+  mu_val    <- 1.2
+  sigma_val <- 0.5
+  
+  # Unconditional expectation: E[T] = exp(mu + sigma^2 / 2)
+  expected_mean <- exp(mu_val + (sigma_val^2) / 2)
+  
+  res <- residlife(
+    values = 0,
+    distribution = "lognormal",
+    parameters = c(meanlog = mu_val, sdlog = sigma_val),
+    type = "mean"
+  )
+  
+  expect_equal(res, expected_mean, tolerance = 1e-4)
+})
+
+test_that("lognormal MRL matches numerical integration of survival function", {
+  mu_val    <- 0.8
+  sigma_val <- 0.6
+  t0        <- 2.5
+  
+  surv_fn <- function(u) {
+    plnorm(u, meanlog = mu_val, sdlog = sigma_val, lower.tail = FALSE)
+  }
+  
+  st0 <- surv_fn(t0)
+  expected_mrl <- integrate(function(u) surv_fn(u) / st0, lower = t0, upper = Inf)$value
+  
+  res <- residlife(
+    values = t0,
+    distribution = "lognormal",
+    parameters = c(meanlog = mu_val, sdlog = sigma_val),
+    type = "mean"
+  )
+  
+  expect_equal(res, expected_mrl, tolerance = 1e-4)
+})
+
+
+test_that("llogis accepts flexible parameter ordering, rate conversion, and unnamed vectors", {
+  shape_val <- 2.5
+  scale_val <- 4.0
+  rate_val  <- 1 / scale_val
+  
+  res_std <- residlife(
+    values = 2.0,
+    distribution = "llogis",
+    parameters = c(shape = shape_val, scale = scale_val)
+  )
+  res_reordered <- residlife(
+    values = 2.0,
+    distribution = "llogis",
+    parameters = c(scale = scale_val, shape = shape_val)
+  )
+  res_rate <- residlife(
+    values = 2.0,
+    distribution = "llogis",
+    parameters = c(shape = shape_val, rate = rate_val)
+  )
+  res_unnamed <- residlife(
+    values = 2.0,
+    distribution = "llogis",
+    parameters = c(shape_val, scale_val)
+  )
+  
+  expect_equal(res_reordered, res_std, tolerance = 1e-6)
+  expect_equal(res_rate, res_std, tolerance = 1e-6)
+  expect_equal(res_unnamed, res_std, tolerance = 1e-6)
+})
+
+test_that("llogis MRL matches theoretical unconditional mean at t0 = 0", {
+  shape_val <- 2.2
+  scale_val <- 3.5
+  
+  # When a > 1, E[T] = lambda * (pi / a) / sin(pi / a)
+  expected_mean <- scale_val * (pi / shape_val) / sin(pi / shape_val)
+  
+  res_mrl0 <- residlife(
+    values = 0,
+    distribution = "llogis",
+    parameters = c(shape = shape_val, scale = scale_val),
+    type = "mean"
+  )
+  
+  expect_equal(res_mrl0, expected_mean, tolerance = 1e-6)
+})
+
+test_that("llogis MRL matches numerical integration of the survival curve", {
+  shape_val <- 2.0
+  scale_val <- 3.0
+  t_points  <- c(0.5, 1.5, 4.0)
+  
+  surv_fn <- function(u) {
+    flexsurv::pllogis(u, shape = shape_val, scale = scale_val, lower.tail = FALSE)
+  }
+  
+  for (t0 in t_points) {
+    st0 <- surv_fn(t0)
+    expected_mrl <- integrate(
+      function(u) surv_fn(u) / st0,
+      lower = t0,
+      upper = Inf,
+      rel.tol = 1e-8
+    )$value
+    
+    res_mrl <- residlife(
+      values = t0,
+      distribution = "llogis",
+      parameters = c(shape = shape_val, scale = scale_val),
+      type = "mean"
+    )
+    
+    expect_equal(res_mrl, expected_mrl, tolerance = 1e-5)
+  }
+})
+
+test_that("llogis warns and returns Inf for MRL when shape <= 1, but keeps quantiles finite", {
+  # When shape <= 1, mean does not exist (tail integral diverges to Inf)
+  expect_warning(
+    res_mean <- residlife(
+      values = 2.0,
+      distribution = "llogis",
+      parameters = c(shape = 0.8, scale = 3.0),
+      type = "mean"
+    ),
+    "Mean residual life is infinite"
+  )
+  expect_equal(res_mean, Inf)
+  
+  # Median/quantiles should evaluate without warning and remain strictly finite
+  expect_no_warning(
+    res_med <- residlife(
+      values = 2.0,
+      distribution = "llogis",
+      parameters = c(shape = 0.8, scale = 3.0),
+      type = "median"
+    )
+  )
+  expect_true(is.finite(res_med))
+  expect_gt(res_med, 0)
+})
+
+# ==============================================================================
+# genf.orig Unit Tests
+# ==============================================================================
+
+test_that("genf.orig accepts flexible parameter ordering and unnamed vectors", {
+  mu_val    <- 0.5
+  sigma_val <- 0.4
+  s1_val    <- 1.5
+  s2_val    <- 2.0
+  
+  res_std <- residlife(
+    values = 1.0,
+    distribution = "genf.orig",
+    parameters = c(mu = mu_val, sigma = sigma_val, s1 = s1_val, s2 = s2_val)
+  )
+  res_reordered <- residlife(
+    values = 1.0,
+    distribution = "genf.orig",
+    parameters = c(s2 = s2_val, mu = mu_val, s1 = s1_val, sigma = sigma_val)
+  )
+  res_unnamed <- residlife(
+    values = 1.0,
+    distribution = "genf.orig",
+    parameters = c(mu_val, sigma_val, s1_val, s2_val)
+  )
+  
+  expect_equal(res_reordered, res_std, tolerance = 1e-6)
+  expect_equal(res_unnamed, res_std, tolerance = 1e-6)
+})
+
+test_that("genf.orig MRL matches theoretical unconditional mean at t0 = 0", {
+  mu_val    <- 0.5
+  sigma_val <- 0.4
+  s1_val    <- 1.5
+  s2_val    <- 2.0
+  
+  # When s2 > sigma, E[T] = exp(mu) * (s2 / s1)^sigma * beta(s1 + sigma, s2 - sigma) / beta(s1, s2)
+  expected_mean <- exp(mu_val) * ((s2_val / s1_val)^sigma_val) * 
+    (beta(s1_val + sigma_val, s2_val - sigma_val) / beta(s1_val, s2_val))
+  
+  res_mrl0 <- residlife(
+    values = 0,
+    distribution = "genf.orig",
+    parameters = c(mu = mu_val, sigma = sigma_val, s1 = s1_val, s2 = s2_val),
+    type = "mean"
+  )
+  
+  expect_equal(res_mrl0, expected_mean, tolerance = 1e-6)
+})
+
+test_that("genf.orig MRL matches numerical integration of the survival curve", {
+  mu_val    <- 0.5
+  sigma_val <- 0.4
+  s1_val    <- 1.5
+  s2_val    <- 2.0
+  t_points  <- c(0.5, 1.5, 3.0)
+  
+  surv_fn <- function(u) {
+    flexsurv::pgenf.orig(u, mu = mu_val, sigma = sigma_val, s1 = s1_val, s2 = s2_val, lower.tail = FALSE)
+  }
+  
+  for (t0 in t_points) {
+    st0 <- surv_fn(t0)
+    expected_mrl <- integrate(
+      function(u) surv_fn(u) / st0,
+      lower = t0,
+      upper = Inf,
+      rel.tol = 1e-8
+    )$value
+    
+    res_mrl <- residlife(
+      values = t0,
+      distribution = "genf.orig",
+      parameters = c(mu = mu_val, sigma = sigma_val, s1 = s1_val, s2 = s2_val),
+      type = "mean"
+    )
+    
+    expect_equal(res_mrl, expected_mrl, tolerance = 1e-5)
+  }
+})
+
+test_that("genf.orig warns and returns Inf for MRL when s2 <= sigma, but keeps quantiles finite", {
+  mu_val    <- 0.5
+  sigma_val <- 0.8
+  s1_val    <- 1.2
+  s2_val    <- 0.6  # s2 <= sigma => moment diverges
+  
+  expect_warning(
+    res_mean <- residlife(
+      values = 1.0,
+      distribution = "genf.orig",
+      parameters = c(mu = mu_val, sigma = sigma_val, s1 = s1_val, s2 = s2_val),
+      type = "mean"
+    ),
+    "Mean residual life is infinite for genf.orig when s2 <= sigma"
+  )
+  expect_equal(res_mean, Inf)
+  
+  expect_no_warning(
+    res_med <- residlife(
+      values = 1.0,
+      distribution = "genf.orig",
+      parameters = c(mu = mu_val, sigma = sigma_val, s1 = s1_val, s2 = s2_val),
+      type = "median"
+    )
+  )
+  expect_true(is.finite(res_med))
+  expect_gt(res_med, 0)
+})
+
+
+# ==============================================================================
+# genf Unit Tests
+# ==============================================================================
+
+test_that("genf accepts flexible parameter ordering and unnamed vectors", {
+  mu_val    <- 0.5
+  sigma_val <- 0.4
+  Q_val     <- 0.6
+  P_val     <- 1.2
+  
+  res_std <- residlife(
+    values = 1.0,
+    distribution = "genf",
+    parameters = c(mu = mu_val, sigma = sigma_val, Q = Q_val, P = P_val)
+  )
+  res_reordered <- residlife(
+    values = 1.0,
+    distribution = "genf",
+    parameters = c(P = P_val, mu = mu_val, Q = Q_val, sigma = sigma_val)
+  )
+  res_unnamed <- residlife(
+    values = 1.0,
+    distribution = "genf",
+    parameters = c(mu_val, sigma_val, Q_val, P_val)
+  )
+  
+  expect_equal(res_reordered, res_std, tolerance = 1e-6)
+  expect_equal(res_unnamed, res_std, tolerance = 1e-6)
+})
+
+test_that("genf matches genf.orig via parameter transformation", {
+  mu_val    <- 0.5
+  sigma_val <- 0.4
+  Q_val     <- 0.5
+  P_val     <- 1.0
+  
+  # Exact flexsurv equivalence:
+  # delta = sqrt(Q^2 + 2*P)
+  # s1 = 2 / (delta * (delta + Q))
+  # s2 = 2 / (delta * (delta - Q))
+  # sigma_orig = sigma / delta
+  # mu_orig = mu
+  delta      <- sqrt(Q_val^2 + 2 * P_val)
+  s1_val     <- 2 / (delta * (delta + Q_val))
+  s2_val     <- 2 / (delta * (delta - Q_val))
+  sigma_orig <- sigma_val / delta
+  mu_orig    <- mu_val
+  
+  t_points <- c(0, 0.8, 2.5)
+  
+  res_genf <- residlife(
+    values = t_points,
+    distribution = "genf",
+    parameters = c(mu = mu_val, sigma = sigma_val, Q = Q_val, P = P_val),
+    type = "all"
+  )
+  
+  res_genf_orig <- residlife(
+    values = t_points,
+    distribution = "genf.orig",
+    parameters = c(mu = mu_orig, sigma = sigma_orig, s1 = s1_val, s2 = s2_val),
+    type = "all"
+  )
+  
+  expect_equal(res_genf, res_genf_orig, tolerance = 1e-6)
+})
+
+test_that("genf MRL matches numerical integration of the survival curve", {
+  mu_val    <- 0.4
+  sigma_val <- 0.35
+  Q_val     <- 0.4
+  P_val     <- 1.2
+  t_points  <- c(0.5, 1.2, 3.0)
+  
+  surv_fn <- function(u) {
+    flexsurv::pgenf(u, mu = mu_val, sigma = sigma_val, Q = Q_val, P = P_val, lower.tail = FALSE)
+  }
+  
+  for (t0 in t_points) {
+    st0 <- surv_fn(t0)
+    expected_mrl <- integrate(
+      function(u) surv_fn(u) / st0,
+      lower = t0,
+      upper = Inf,
+      rel.tol = 1e-8
+    )$value
+    
+    res_mrl <- residlife(
+      values = t0,
+      distribution = "genf",
+      parameters = c(mu = mu_val, sigma = sigma_val, Q = Q_val, P = P_val),
+      type = "mean"
+    )
+    
+    expect_equal(res_mrl, expected_mrl, tolerance = 1e-5)
+  }
+})
+
+test_that("genf warns and returns Inf for MRL when s2 <= sigma / delta, but preserves quantiles", {
+  mu_val    <- 0.0
+  sigma_val <- 25.0
+  Q_val     <- 1.0
+  P_val     <- 0.1
+  
+  expect_warning(
+    res_mean <- residlife(
+      values = 1.0,
+      distribution = "genf",
+      parameters = c(mu = mu_val, sigma = sigma_val, Q = Q_val, P = P_val),
+      type = "mean"
+    ),
+    "Mean residual life is infinite for genf when s2 <= sigma / delta"
+  )
+  expect_equal(res_mean, Inf)
+  
+  expect_no_warning(
+    res_med <- residlife(
+      values = 1.0,
+      distribution = "genf",
+      parameters = c(mu = mu_val, sigma = sigma_val, Q = Q_val, P = P_val),
+      type = "median"
+    )
+  )
+  expect_true(is.finite(res_med))
+  expect_gt(res_med, 0)
+})
