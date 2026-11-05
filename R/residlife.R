@@ -30,19 +30,26 @@
 #' statistics, pp. 1187–1192
 residlife = function(values, distribution, parameters, p = .5, type = 'mean'){
   if (distribution == 'weibull'){
-    life = values
-    if (names(parameters)[1]!= "shape" | names(parameters)[2]!= "scale"){
-      stop("incorrect parameters entered. Parameters for weibull are shape and scale")
-    }
-    else{
-      shape_para = parameters[1]
-      scale_para = parameters[2]
-      mx = as.numeric((scale_para/shape_para)*exp((life/scale_para)^shape_para)*Vectorize(pracma::incgam)((life/scale_para)^shape_para, 1/shape_para))
-      S_t = exp(-((life/scale_para)^shape_para))
-      px = function(p){
-        pc = (1-p)*S_t
-        px = as.numeric(qweibull(pc, shape = shape_para, scale = scale_para, lower.tail = FALSE) - life)
+    x = values
+    if (is.null(names(parameters))) {
+      if (length(parameters) < 2) {
+        stop("Two parameters required for weibull: shape and scale")
       }
+      shape_para = as.numeric(parameters[1])
+      scale_para = as.numeric(parameters[2])
+    } else {
+      if (!all(c("shape", "scale") %in% names(parameters))) {
+        stop("incorrect parameters entered. Parameters for weibull are shape and scale")
+      }
+      shape_para = as.numeric(parameters["shape"])
+      scale_para = as.numeric(parameters["scale"])
+    }
+    
+    mx = as.numeric((scale_para/shape_para)*exp((x/scale_para)^shape_para)*Vectorize(pracma::incgam)((x/scale_para)^shape_para, 1/shape_para))
+    S_t = exp(-((x/scale_para)^shape_para))
+    px = function(p){
+      pc = (1-p)*S_t
+      px = as.numeric(qweibull(pc, shape = shape_para, scale = scale_para, lower.tail = FALSE) - x)
     }
   }
   if (distribution == 'gompertz'){
