@@ -54,19 +54,30 @@ residlife = function(values, distribution, parameters, p = .5, type = 'mean'){
   }
   if (distribution == 'gompertz'){
     x = values
-    if (names(parameters)[1]!= "shape" | !(names(parameters)[2] %in% c("scale", "rate"))){
-      stop("incorrect parameters entered. Parameters for gompertz are shape and scale/rate")
-    }
-    else{
-      a = parameters[1]
-      lambda = parameters[2]
-      zx = ((lambda)/a)*exp(a*x)
-      sx = exp(((lambda)/a)*(1-exp(a*x)))
-      mx = as.numeric(exp(zx)*(1/a)*Vectorize(pracma::incgam)(zx, 0))
-      px = function(p){
-        pc = (1-p)*sx
-        px = as.numeric(qgompertz(pc, shape = a, rate = lambda, lower.tail = FALSE) - x)
+    if (is.null(names(parameters))) {
+      if (length(parameters) < 2) {
+        stop("Two parameters required for gompertz: shape and rate")
       }
+      a = as.numeric(parameters[1])
+      lambda = as.numeric(parameters[2])
+    } else {
+      if (!("shape" %in% names(parameters)) || !any(c("scale", "rate") %in% names(parameters))) {
+        stop("incorrect parameters entered. Parameters for gompertz are shape and scale/rate")
+      }
+      a = as.numeric(parameters["shape"])
+      if ("rate" %in% names(parameters)) {
+        lambda = as.numeric(parameters["rate"])
+      } else {
+        lambda = 1 / as.numeric(parameters["scale"])
+      }
+    }
+    
+    zx = (lambda / a) * exp(a * x)
+    sx = exp((lambda / a) * (1 - exp(a * x)))
+    mx = as.numeric((1 / a) * exp(zx) * Vectorize(pracma::incgam)(zx, 0))
+    px = function(p){
+      pc = (1 - p) * sx
+      px = as.numeric(flexsurv::qgompertz(pc, shape = a, rate = lambda, lower.tail = FALSE) - x)
     }
   }
   if (distribution == 'gamma'){

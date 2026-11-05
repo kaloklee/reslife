@@ -126,3 +126,37 @@ test_that("gamma MRL at t0 = 0 matches unconditional expectation a * lambda", {
   res_lt1 <- residlife(values = 0, distribution = "gamma", parameters = c(shape = shape_lt1, scale = scale_val), type = "mean")
   expect_equal(res_lt1, shape_lt1 * scale_val, tolerance = 1e-4)
 })
+
+test_that("gompertz accepts flexible parameter ordering and scale/rate conversion", {
+  shape_val <- 0.05
+  rate_val  <- 0.01
+  scale_val <- 1 / rate_val
+  
+  res_rate  <- residlife(values = c(10, 20), distribution = "gompertz", parameters = c(shape = shape_val, rate = rate_val))
+  res_scale <- residlife(values = c(10, 20), distribution = "gompertz", parameters = c(scale = scale_val, shape = shape_val))
+  res_unnamed <- residlife(values = c(10, 20), distribution = "gompertz", parameters = c(shape_val, rate_val))
+  
+  expect_equal(res_scale, res_rate, tolerance = 1e-4)
+  expect_equal(res_unnamed, res_rate, tolerance = 1e-4)
+})
+
+test_that("gompertz MRL matches numerical integration of survival function", {
+  shape_val <- 0.04
+  rate_val  <- 0.02
+  t0 <- 15
+  
+  # Numerical integration of S(u)/S(t0) from t0 to Inf
+  surv_gompertz <- function(u) {
+    exp((rate_val / shape_val) * (1 - exp(shape_val * u)))
+  }
+  st0 <- surv_gompertz(t0)
+  expected_mrl <- integrate(function(u) surv_gompertz(u) / st0, lower = t0, upper = Inf)$value
+  
+  res <- residlife(
+    values = t0,
+    distribution = "gompertz",
+    parameters = c(shape = shape_val, rate = rate_val),
+    type = "mean"
+  )
+  expect_equal(res, expected_mrl, tolerance = 1e-4)
+})
