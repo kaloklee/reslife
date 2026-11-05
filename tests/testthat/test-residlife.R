@@ -160,3 +160,151 @@ test_that("gompertz MRL matches numerical integration of survival function", {
   )
   expect_equal(res, expected_mrl, tolerance = 1e-4)
 })
+
+test_that("gengamma.orig reduces to exponential when b = 1 and k = 1", {
+  scale_val <- 4.0
+  
+  # When shape (b) = 1 and k = 1, Stacy's gengamma reduces to Exponential(rate = 1/scale)
+  # MRL must equal scale across all evaluation points
+  for (t0 in c(0, 1.5, 5)) {
+    res_mrl <- residlife(
+      values = t0,
+      distribution = "gengamma.orig",
+      parameters = c(shape = 1, scale = scale_val, k = 1),
+      type = "mean"
+    )
+    expect_equal(res_mrl, scale_val, tolerance = 1e-4)
+  }
+})
+
+test_that("gengamma.orig reduces to weibull when k = 1", {
+  shape_val <- 1.8
+  scale_val <- 3.5
+  t_vals <- c(0, 1, 3)
+  
+  res_gengamma <- residlife(
+    values = t_vals,
+    distribution = "gengamma.orig",
+    parameters = c(shape = shape_val, scale = scale_val, k = 1),
+    type = "all"
+  )
+  
+  res_weibull <- residlife(
+    values = t_vals,
+    distribution = "weibull",
+    parameters = c(shape = shape_val, scale = scale_val),
+    type = "all"
+  )
+  
+  expect_equal(res_gengamma, res_weibull, tolerance = 1e-4)
+})
+
+test_that("gengamma.orig accepts flexible parameter ordering and unnamed vectors", {
+  b_val <- 1.5
+  a_val <- 2.5
+  k_val <- 0.8
+  
+  res_std <- residlife(
+    values = 2,
+    distribution = "gengamma.orig",
+    parameters = c(shape = b_val, scale = a_val, k = k_val)
+  )
+  res_reordered <- residlife(
+    values = 2,
+    distribution = "gengamma.orig",
+    parameters = c(k = k_val, scale = a_val, shape = b_val)
+  )
+  res_unnamed <- residlife(
+    values = 2,
+    distribution = "gengamma.orig",
+    parameters = c(b_val, a_val, k_val)
+  )
+  
+  expect_equal(res_reordered, res_std, tolerance = 1e-4)
+  expect_equal(res_unnamed, res_std, tolerance = 1e-4)
+})
+
+test_that("gengamma matches gengamma.orig via parameter transformation", {
+  # Parameter equivalences:
+  # k = 1 / Q^2  => Q = 1 / sqrt(k)
+  # b = abs(Q) / sigma => sigma = Q / b
+  # a = exp(mu - (log(Q^(-2)) * sigma) / abs(Q)) => mu = log(a) + (log(Q^(-2)) * sigma) / abs(Q)
+  b_val <- 1.5
+  a_val <- 3.0
+  k_val <- 0.8
+  
+  Q_val <- 1 / sqrt(k_val)
+  sigma_val <- Q_val / b_val
+  mu_val <- log(a_val) + (log(Q_val^(-2)) * sigma_val) / abs(Q_val)
+  
+  t_vals <- c(0, 1.2, 4.0)
+  
+  res_orig <- residlife(
+    values = t_vals,
+    distribution = "gengamma.orig",
+    parameters = c(shape = b_val, scale = a_val, k = k_val),
+    type = "all"
+  )
+  
+  res_prentice <- residlife(
+    values = t_vals,
+    distribution = "gengamma",
+    parameters = c(mu = mu_val, sigma = sigma_val, Q = Q_val),
+    type = "all"
+  )
+  
+  expect_equal(res_prentice, res_orig, tolerance = 1e-4)
+})
+
+test_that("gengamma accepts flexible parameter ordering and unnamed vectors", {
+  mu_val    <- 1.2
+  sigma_val <- 0.6
+  Q_val     <- 0.9
+  
+  res_std <- residlife(
+    values = 1.5,
+    distribution = "gengamma",
+    parameters = c(mu = mu_val, sigma = sigma_val, Q = Q_val)
+  )
+  res_reordered <- residlife(
+    values = 1.5,
+    distribution = "gengamma",
+    parameters = c(Q = Q_val, mu = mu_val, sigma = sigma_val)
+  )
+  res_unnamed <- residlife(
+    values = 1.5,
+    distribution = "gengamma",
+    parameters = c(mu_val, sigma_val, Q_val)
+  )
+  
+  expect_equal(res_reordered, res_std, tolerance = 1e-4)
+  expect_equal(res_unnamed, res_std, tolerance = 1e-4)
+})
+
+test_that("gengamma reduces to weibull when Q = 1", {
+  # In Prentice form, Q = 1 corresponds to Weibull with:
+  # shape = 1 / sigma
+  # scale = exp(mu)
+  mu_val <- 1.5
+  sigma_val <- 0.8
+  
+  shape_weibull <- 1 / sigma_val
+  scale_weibull <- exp(mu_val)
+  t_vals <- c(0.5, 2.0)
+  
+  res_gengamma <- residlife(
+    values = t_vals,
+    distribution = "gengamma",
+    parameters = c(mu = mu_val, sigma = sigma_val, Q = 1),
+    type = "all"
+  )
+  
+  res_weibull <- residlife(
+    values = t_vals,
+    distribution = "weibull",
+    parameters = c(shape = shape_weibull, scale = scale_weibull),
+    type = "all"
+  )
+  
+  expect_equal(res_gengamma, res_weibull, tolerance = 1e-4)
+})

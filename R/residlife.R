@@ -109,48 +109,64 @@ residlife = function(values, distribution, parameters, p = .5, type = 'mean'){
   }
   if (distribution == 'gengamma.orig'){
     x = values
-    upper_incomplete_gamma <- function(x,a) {
-      #return (incgam(x,a))
-      return (gamma(a) * pgamma(x, a, 1, lower.tail = FALSE))
+    upper_incomplete_gamma <- function(x, a) {
+      return(gamma(a) * pgamma(x, a, 1, lower.tail = FALSE))
     }
-    if (names(parameters)[1]!= "shape" | names(parameters)[2]!= "scale" | names(parameters)[3]!= 'k'){
-      stop("incorrect parameters entered. Parameters for gengamma.orig are shape, scale, and k")
-    }
-    else{
-      b = parameters[1]
-      k = parameters[3]
-      a = parameters[2]
-      mx = as.numeric(a * upper_incomplete_gamma((x/a)^b, k + 1/b)/upper_incomplete_gamma((x/a)^b, k) - x)
-      sx = pgengamma.orig(x, shape = b, scale = a, k = k, lower.tail = FALSE)
-      px = function(p){
-        pc = (1-p)*sx
-        px = as.numeric(qgengamma.orig(pc, shape = b, scale = a, k = k, lower.tail = FALSE) - x)
+    
+    if (is.null(names(parameters))) {
+      if (length(parameters) < 3) {
+        stop("Three parameters required for gengamma.orig: shape, scale, and k")
       }
+      b = as.numeric(parameters[1])
+      a = as.numeric(parameters[2])
+      k = as.numeric(parameters[3])
+    } else {
+      if (!all(c("shape", "scale", "k") %in% names(parameters))) {
+        stop("incorrect parameters entered. Parameters for gengamma.orig are shape, scale, and k")
+      }
+      b = as.numeric(parameters["shape"])
+      a = as.numeric(parameters["scale"])
+      k = as.numeric(parameters["k"])
+    }
+    
+    mx = as.numeric(a * upper_incomplete_gamma((x / a)^b, k + 1 / b) / upper_incomplete_gamma((x / a)^b, k) - x)
+    sx = pgengamma.orig(x, shape = b, scale = a, k = k, lower.tail = FALSE)
+    px = function(p){
+      pc = (1 - p) * sx
+      px = as.numeric(qgengamma.orig(pc, shape = b, scale = a, k = k, lower.tail = FALSE) - x)
     }
   }
   if (distribution == 'gengamma'){
     x = values
-    upper_incomplete_gamma <- function(x,a) {
-      return (gamma(a) * pgamma(x, a, 1, lower.tail = FALSE))
+    upper_incomplete_gamma <- function(x, a) {
+      return(gamma(a) * pgamma(x, a, 1, lower.tail = FALSE))
     }
-    if (names(parameters)[1]!= "mu" | names(parameters)[2]!= "sigma" | names(parameters)[3]!= 'Q'){
-      stop("incorrect parameters entered. Parameters for gengamma are mu, sigma, and Q")
-    }
-    else{
-      mu = parameters[1]
-      sigma = parameters[2]
-      Q = parameters[3]
-      k = 1 / (Q^2)
-      b = abs(Q)/(sigma)
-      a = exp(mu - (log(Q^(-2))*sigma)/(abs(Q)))
-      sx = pgengamma(x,mu = mu, sigma = sigma, Q = Q, lower.tail = FALSE)
-      mx = as.numeric(a * upper_incomplete_gamma((x/a)^b, k + 1/b)/upper_incomplete_gamma((x/a)^b, k) - x)
-
-      px = function(p){
-        pc = (1-p)*sx
-        px = as.numeric(qgengamma(pc,mu = mu, sigma = sigma,Q = Q, lower.tail = FALSE) - x)
+    
+    if (is.null(names(parameters))) {
+      if (length(parameters) < 3) {
+        stop("Three parameters required for gengamma: mu, sigma, and Q")
       }
-
+      mu = as.numeric(parameters[1])
+      sigma = as.numeric(parameters[2])
+      Q = as.numeric(parameters[3])
+    } else {
+      if (!all(c("mu", "sigma", "Q") %in% names(parameters))) {
+        stop("incorrect parameters entered. Parameters for gengamma are mu, sigma, and Q")
+      }
+      mu = as.numeric(parameters["mu"])
+      sigma = as.numeric(parameters["sigma"])
+      Q = as.numeric(parameters["Q"])
+    }
+    
+    k = 1 / (Q^2)
+    b = abs(Q) / sigma
+    a = exp(mu - (log(Q^(-2)) * sigma) / abs(Q))
+    sx = pgengamma(x, mu = mu, sigma = sigma, Q = Q, lower.tail = FALSE)
+    mx = as.numeric(a * upper_incomplete_gamma((x / a)^b, k + 1 / b) / upper_incomplete_gamma((x / a)^b, k) - x)
+    
+    px = function(p){
+      pc = (1 - p) * sx
+      px = as.numeric(qgengamma(pc, mu = mu, sigma = sigma, Q = Q, lower.tail = FALSE) - x)
     }
   }
   if (distribution == 'exponential'){
