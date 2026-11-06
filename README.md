@@ -10,11 +10,13 @@ The repository for the R package [reslife](https://cran.r-project.org/web/packag
 ## Installation
 
 ### Stable release from CRAN
+
 ```r
 install.packages("reslife")
 ```
 
 ### Development version from GitHub
+
 ```r
 # install.packages("devtools")
 devtools::install_github("kaloklee/reslife")
@@ -29,9 +31,9 @@ devtools::install_github("kaloklee/reslife")
 
 ## Documentation & Website
 
-* **Documentation Site & Vignette:** [https://kaloklee.github.io/reslife/](https://kaloklee.github.io/reslife/)
-* **CRAN Vignette:** [reslife Package Demonstration](https://cran.r-project.org/web/packages/reslife/vignettes/reslife_package_demonstration_vignette.html)
+* **Package Website & Vignette:** [https://kaloklee.github.io/reslife/](https://kaloklee.github.io/reslife/)
 * **Methodology Paper:** Wang, Z., Crawford, A., Lee, K. L., Lu, L., & Jaganathan, S. (2025). *reslife: Residual Lifetime Analysis Tool in R*. arXiv preprint [arXiv:2308.07410](https://arxiv.org/abs/2308.07410).
+
 ---
 
 ## Quick Example
