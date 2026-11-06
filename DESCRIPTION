@@ -1,17 +1,11 @@
 Package: reslife
 Type: Package
 Title: Calculate Mean Residual Life (MRL) and Related Values for Different Distributions
-Version: 0.2.1
-Date: 2023-10-26
-Authors@R: c(person("Andrew", "Crawford", 
-    email = 'atcrawford18@gmail.com',
-    role = c('cre', 'aut')), 
-    person("Zekai", "Wang",
-    email='wangzekai1203@gmail.com',
-    role = c('aut')),
-    person("Ka Lok", "Lee",
-    email = "kaloklee@gmail.com", 
-    role = c('aut'))
+Version: 0.3.0
+Date: 2026-11-06
+Authors@R: c(person("Ka Lok", "Lee", email = "kaloklee@gmail.com",  role = c('cre', 'aut')), 
+    person("Andrew", "Crawford", email = 'atcrawford18@gmail.com', role = c('aut')),
+    person("Zekai", "Wang", email='wangzekai1203@gmail.com', role = c('aut'))
       )
 Description: A pair of functions for calculating mean residual life (MRL)
     , median residual life, and percentile residual life using the outputs of 
@@ -27,7 +21,7 @@ Depends:
     pracma,
     flexsurv,
     gsl
-URL: https://github.com/an-crawford/reslife, https://kaloklee.github.io/reslife/
+URL: https://github.com/kaloklee/reslife, https://kaloklee.github.io/reslife/
 Suggests: 
     knitr,
     rmarkdown,
@@ -36,3 +30,4 @@ Suggests:
 VignetteBuilder: knitr
 Config/roxygen2/version: 8.1.1
 Config/testthat/edition: 3
+BugReports: https://github.com/kaloklee/reslife/issues
