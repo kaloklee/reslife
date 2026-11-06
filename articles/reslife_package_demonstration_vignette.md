@@ -359,7 +359,7 @@ sessionInfo()
 #> [1] stats     graphics  grDevices utils     datasets  methods   base     
 #> 
 #> other attached packages:
-#> [1] reslife_0.2.1   gsl_2.1-9       flexsurv_2.3.2  survival_3.8-12
+#> [1] reslife_0.3.0   gsl_2.1-9       flexsurv_2.3.2  survival_3.8-12
 #> [5] pracma_2.4.6   
 #> 
 #> loaded via a namespace (and not attached):
