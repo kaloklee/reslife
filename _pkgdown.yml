@@ -1,0 +1,19 @@
+url: https://kaloklee.github.io/reslife/
+template:
+  bootstrap: 5
+navbar:
+  structure:
+    left:
+    - intro
+    - reference
+    - articles
+    - news
+    right: github
+  components:
+    articles:
+      text: Articles
+      menu:
+      - text: reslife Package Demonstration
+        href: articles/reslife_package_demonstration_vignette.html
+
+

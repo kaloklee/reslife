@@ -27,7 +27,7 @@ Depends:
     pracma,
     flexsurv,
     gsl
-URL: https://github.com/an-crawford/reslife
+URL: https://github.com/an-crawford/reslife, https://kaloklee.github.io/reslife/
 Suggests: 
     knitr,
     rmarkdown,

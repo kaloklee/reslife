@@ -7,6 +7,8 @@ vignette: >
   %\VignetteEncoding{UTF-8}
 ---
 
+The mathematical derivations, integral forms, and distribution specifications implemented in this package are detailed in the companion paper: [Wang et al. (2025)](https://arxiv.org/pdf/2308.07410.pdf).
+
 ```{r, include = FALSE}
 knitr::opts_chunk$set(
   error = TRUE,
@@ -231,6 +233,24 @@ plot(times, mrl_curve, type = "l", lwd = 2, col = "darkred",
      ylab = "Mean Residual Life e(x)",
      main = "Weibull Mean Residual Life Curve")
 grid()
+```
+
+---
+
+## References
+
+To cite the `reslife` package or the theoretical derivations in publications, please use:
+
+* Wang, Z., Crawford, A., Lee, K. L., Lu, L., & Jaganathan, S. (2025). *reslife: Residual Lifetime Analysis Tool in R*. arXiv preprint [arXiv:2308.07410](https://arxiv.org/abs/2308.07410).
+
+```bibtex
+@article{wang2025reslife,
+  title   = {reslife: Residual Lifetime Analysis Tool in R},
+  author  = {Wang, Zekai and Crawford, Andrew and Lee, Ka Lok and Lu, Lin and Jaganathan, Srihari},
+  journal = {arXiv preprint arXiv:2308.07410},
+  year    = {2025},
+  url     = {https://arxiv.org/abs/2308.07410}
+}
 ```
 
 ---
