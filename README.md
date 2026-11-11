@@ -32,6 +32,10 @@ devtools::install_github("kaloklee/reslife")
 ## Documentation & Website
 
 * **Package Website & Vignette:** [https://kaloklee.github.io/reslife/](https://kaloklee.github.io/reslife/)
+## Documentation & Website
+
+* **Package Website:** [https://kaloklee.github.io/reslife/](https://kaloklee.github.io/reslife/)
+* **Package Vignette (Tutorial):** [reslife Package Demonstration](https://kaloklee.github.io/reslife/articles/reslife_package_demonstration_vignette.html)
 * **Methodology Paper:** Wang, Z., Crawford, A., Lee, K. L., Lu, L., & Jaganathan, S. (2025). *reslife: Residual Lifetime Analysis Tool in R*. arXiv preprint [arXiv:2308.07410](https://arxiv.org/abs/2308.07410).
 
 ---
